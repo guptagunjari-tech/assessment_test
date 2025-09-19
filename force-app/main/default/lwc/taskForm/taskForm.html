@@ -1,0 +1,85 @@
+<template>
+    <div class="slds-p-around_medium">
+        <lightning-button
+            label="New Task"
+            variant="brand"
+            onclick={handleNewClick}
+            class="slds-m-bottom_medium">
+        </lightning-button>
+
+        <template if:true={showModal}>
+            <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <header class="slds-modal__header">
+                        <h2 class="slds-modal__title slds-hyphenate">
+                            {modalTitle}
+                        </h2>
+                        <button class="slds-button slds-button_icon slds-modal__close" onclick={handleClose}>
+                            <lightning-icon icon-name="utility:close" size="small"></lightning-icon>
+                        </button>
+                    </header>
+
+                    <div class="slds-modal__content slds-p-around_medium">
+                        <lightning-record-edit-form
+                            object-api-name="Task_Management__c"
+                            record-id={recordId}
+                            onsuccess={handleSuccess}
+                            onsubmit={handleSubmit}
+                            onerror={handleError}>
+
+                            <lightning-messages></lightning-messages>
+                            
+                            <div class="slds-grid slds-gutters">
+                                <div class="slds-col slds-size_1-of-2">
+                                    <lightning-input-field field-name="Title__c" required></lightning-input-field>
+                                    <lightning-input-field field-name="Description__c"></lightning-input-field>
+                                    <lightning-input-field field-name="Status__c" required></lightning-input-field>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2">
+                                    <lightning-input-field field-name="Priority__c" required></lightning-input-field>
+                                    <lightning-input-field field-name="Due_Date__c"></lightning-input-field>
+                                    <lightning-input-field field-name="Category__c"></lightning-input-field>
+                                    <lightning-input-field field-name="Assigned_To__c"></lightning-input-field>
+                                </div>
+                            </div>
+
+                            <div class="slds-m-top_medium">
+                                <lightning-input
+                                    type="text"
+                                    label="Tags (comma-separated)"
+                                    value={tagsString}
+                                    onchange={handleTagsChange}>
+                                </lightning-input>
+                            </div>
+
+                            <div class="slds-m-top_medium">
+                                <template for:each={tags} for:item="tag">
+                                    <lightning-pill 
+                                        key={tag}
+                                        label={tag}
+                                        onremove={handleRemoveTag}>
+                                    </lightning-pill>
+                                </template>
+                            </div>
+
+                            <div class="slds-m-top_medium slds-text-align_right">
+                                <lightning-button
+                                    class="slds-m-right_x-small"
+                                    label="Cancel"
+                                    onclick={handleClose}>
+                                </lightning-button>
+                                <lightning-button
+                                    variant="brand"
+                                    type="submit"
+                                    label="Save"
+                                    disabled={isSaving}>
+                                </lightning-button>
+                            </div>
+                        </lightning-record-edit-form>
+                    </div>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+    </div>
+</template>

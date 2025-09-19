@@ -1,0 +1,28 @@
+<template>
+    <lightning-card title="Task Management" icon-name="standard:task">
+        <div class="slds-p-around_medium">
+            <div class="slds-grid slds-wrap">
+                <div class="slds-col slds-size_1-of-1 slds-large-size_8-of-12">
+                    <c-task-list
+                        onselect={handleTaskSelect}
+                        onrefresh={handleRefresh}>
+                    </c-task-list>
+                </div>
+                <div class="slds-col slds-size_1-of-1 slds-large-size_4-of-12 slds-p-left_medium">
+                    <c-task-statistics-dashboard></c-task-statistics-dashboard>
+                </div>
+            </div>
+            <c-task-form
+                onnew={handleNewTask}
+                onrefresh={handleRefresh}>
+            </c-task-form>
+            <template if:true={selectedTask}>
+                <c-task-detail
+                    task-id={selectedTask.Id}
+                    onclose={handleCloseDetail}
+                    onrefresh={handleRefresh}>
+                </c-task-detail>
+            </template>
+        </div>
+    </lightning-card>
+</template>

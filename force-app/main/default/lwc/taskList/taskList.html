@@ -1,0 +1,85 @@
+<template>
+    <div class="slds-card">
+        <div class="slds-p-around_medium">
+            <div class="slds-grid slds-gutters slds-m-bottom_small">
+                <div class="slds-col">
+                    <lightning-input
+                        type="search"
+                        label="Search Tasks"
+                        onchange={handleSearch}>
+                    </lightning-input>
+                </div>
+                <div class="slds-col">
+                    <lightning-combobox
+                        name="status"
+                        label="Status"
+                        value={statusFilter}
+                        options={statusOptions}
+                        onchange={handleStatusChange}>
+                    </lightning-combobox>
+                </div>
+                <div class="slds-col">
+                    <lightning-combobox
+                        name="priority"
+                        label="Priority"
+                        value={priorityFilter}
+                        options={priorityOptions}
+                        onchange={handlePriorityChange}>
+                    </lightning-combobox>
+                </div>
+            </div>
+
+            <lightning-datatable
+                key-field="Id"
+                data={tasks}
+                columns={columns}
+                hide-checkbox-column
+                show-row-number-column
+                sorted-by={sortBy}
+                sorted-direction={sortDirection}
+                onsort={handleSort}
+                onrowaction={handleRowAction}>
+            </lightning-datatable>
+
+            <div class="slds-grid slds-grid_align-center slds-m-top_small">
+                <lightning-button-group>
+                    <lightning-button 
+                        label="Previous"
+                        onclick={handlePrevious}
+                        disabled={isFirstPage}>
+                    </lightning-button>
+                    <lightning-button 
+                        label="Next"
+                        onclick={handleNext}
+                        disabled={isLastPage}>
+                    </lightning-button>
+                </lightning-button-group>
+            </div>
+        </div>
+
+        <template if:true={showDeleteModal}>
+            <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open slds-modal_small">
+                <div class="slds-modal__container">
+                    <header class="slds-modal__header">
+                        <h2>Delete Task</h2>
+                    </header>
+                    <div class="slds-modal__content slds-p-around_medium">
+                        <p>Are you sure you want to delete this task?</p>
+                    </div>
+                    <footer class="slds-modal__footer">
+                        <lightning-button 
+                            label="Cancel"
+                            onclick={handleCancelDelete}>
+                        </lightning-button>
+                        <lightning-button 
+                            label="Delete"
+                            variant="destructive"
+                            onclick={handleConfirmDelete}>
+                        </lightning-button>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+    </div>
+</template>

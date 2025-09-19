@@ -1,0 +1,123 @@
+<template>
+    <template if:true={task.data}>
+        <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <h2 class="slds-modal__title slds-hyphenate">
+                        {task.data.Title__c}
+                    </h2>
+                    <button class="slds-button slds-button_icon slds-modal__close" onclick={handleClose}>
+                        <lightning-icon icon-name="utility:close" size="small"></lightning-icon>
+                    </button>
+                </header>
+
+                <div class="slds-modal__content slds-p-around_medium">
+                    <div class="slds-grid slds-gutters">
+                        <div class="slds-col slds-size_2-of-3">
+                            <div class="slds-form">
+                                <div class="slds-form-element">
+                                    <span class="slds-form-element__label">Description</span>
+                                    <div class="slds-form-element__control">
+                                        <div class="slds-text-longform">
+                                            {task.data.Description__c}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="slds-grid slds-gutters slds-m-top_medium">
+                                    <div class="slds-col">
+                                        <div class="slds-form-element">
+                                            <span class="slds-form-element__label">Status</span>
+                                            <div class="slds-form-element__control">
+                                                <lightning-badge label={task.data.Status__c}></lightning-badge>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="slds-col">
+                                        <div class="slds-form-element">
+                                            <span class="slds-form-element__label">Priority</span>
+                                            <div class="slds-form-element__control">
+                                                <lightning-badge label={task.data.Priority__c}></lightning-badge>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="slds-grid slds-gutters slds-m-top_medium">
+                                    <div class="slds-col">
+                                        <div class="slds-form-element">
+                                            <span class="slds-form-element__label">Due Date</span>
+                                            <div class="slds-form-element__control">
+                                                <lightning-formatted-date-time 
+                                                    value={task.data.Due_Date__c}>
+                                                </lightning-formatted-date-time>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="slds-col">
+                                        <div class="slds-form-element">
+                                            <span class="slds-form-element__label">Category</span>
+                                            <div class="slds-form-element__control">
+                                                {task.data.Category__c}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="slds-form-element slds-m-top_medium">
+                                    <span class="slds-form-element__label">Assigned To</span>
+                                    <div class="slds-form-element__control">
+                                        {assignedToName}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="slds-col slds-size_1-of-3">
+                            <c-ai-summary-display
+                                task-id={taskId}
+                                summary={task.data.AI_Summary__c}
+                                is-generated={task.data.AI_Summary_Generated__c}
+                                last-updated={task.data.AI_Summary_Last_Updated__c}>
+                            </c-ai-summary-display>
+
+                            <template if:true={taskTags.data}>
+                                <div class="slds-m-top_medium">
+                                    <div class="slds-form-element__label">Tags</div>
+                                    <div class="slds-pill_container">
+                                        <template for:each={taskTags.data} for:item="tag">
+                                            <lightning-pill 
+                                                key={tag.Id}
+                                                label={tag.Name}
+                                            ></lightning-pill>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                <footer class="slds-modal__footer">
+                    <lightning-button-group>
+                        <lightning-button 
+                            label="Close"
+                            onclick={handleClose}>
+                        </lightning-button>
+                        <lightning-button 
+                            label="Edit"
+                            variant="brand"
+                            onclick={handleEdit}>
+                        </lightning-button>
+                        <lightning-button 
+                            label="Delete"
+                            variant="destructive"
+                            onclick={handleDelete}>
+                        </lightning-button>
+                    </lightning-button-group>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+</template>
