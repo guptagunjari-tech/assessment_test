@@ -17,10 +17,13 @@ export default class TaskList extends LightningElement {
     @track priorityFilter = '';
     @track pageNumber = 1;
     @track showDeleteModal = false;
+    @track showSummaryModal = false;
     @track taskToDelete;
     @track searchTerm = '';
+    @track taskIdForSummary = '';
 
     columns = [
+        { label: 'Name', fieldName: 'Name__c', type: 'text', sortable: true },
         { label: 'Title', fieldName: 'Title__c', type: 'text', sortable: true },
         { label: 'Status', fieldName: 'Status__c', type: 'text', sortable: true },
         { label: 'Priority', fieldName: 'Priority__c', type: 'text', sortable: true },
@@ -30,9 +33,9 @@ export default class TaskList extends LightningElement {
             type: 'action',
             typeAttributes: {
                 rowActions: [
-                    { label: 'View', name: 'view' },
                     { label: 'Edit', name: 'edit' },
-                    { label: 'Delete', name: 'delete' }
+                    { label: 'Delete', name: 'delete' },
+                    { label: 'Generate AI Summary', name: 'generateSummary' }
                 ]
             }
         }
@@ -60,7 +63,9 @@ export default class TaskList extends LightningElement {
         statusFilter: '$statusFilter',
         priorityFilter: '$priorityFilter',
         limitSize: PAGE_SIZE,
-        offset: '$offset'
+        offset: '$offset',
+        sortColumn: '$sortBy',
+        sortDirection: '$sortDirection'
     })
     wiredTasks(result) {
         this.wiredTaskResult = result;
@@ -123,6 +128,8 @@ export default class TaskList extends LightningElement {
     handleSort(event) {
         this.sortBy = event.detail.fieldName;
         this.sortDirection = event.detail.sortDirection;
+        console.log('this.sortDirection', this.sortDirection);
+        console.log('this.sortBy', this.sortBy);
         this.refreshTasks();
     }
 
@@ -131,7 +138,6 @@ export default class TaskList extends LightningElement {
         const row = event.detail.row;
 
         switch (action.name) {
-            case 'view':
             case 'edit':
                 this.dispatchEvent(new CustomEvent('select', {
                     detail: row
@@ -140,6 +146,10 @@ export default class TaskList extends LightningElement {
             case 'delete':
                 this.taskToDelete = row;
                 this.showDeleteModal = true;
+                break;
+            case 'generateSummary':
+                this.showSummaryModal = true;
+                this.taskIdForSummary = row.Id;
                 break;
             default:
                 break;
@@ -170,12 +180,18 @@ export default class TaskList extends LightningElement {
             .finally(() => {
                 this.showDeleteModal = false;
                 this.taskToDelete = null;
+                this.dispatchEvent(new CustomEvent('refresh'));
             });
     }
 
     handleCancelDelete() {
         this.showDeleteModal = false;
         this.taskToDelete = null;
+    }
+
+    handleCloseSummary() {
+        this.showSummaryModal = false;
+        this.taskIdForSummary = '';
     }
 
     handlePrevious() {

@@ -1,50 +1,66 @@
 public with sharing class TaskStatisticsController {
+
     @AuraEnabled(cacheable=true)
     public static Map<String, Object> getTaskStatistics() {
-        Map<String, Object> statistics = new Map<String, Object>();
-        
-        AggregateResult[] statusCounts = [
+        Map<String, Object> stats = new Map<String, Object>();
+
+        stats.put('statusCounts', fetchStatusCounts());
+        stats.put('priorityCounts', fetchPriorityCounts());
+        stats.put('overdueTasks', calculateOverdueTasks());
+
+        return stats;
+    }
+
+    /**
+     * Returns counts of tasks grouped by status
+     */
+    private static Map<String, Integer> fetchStatusCounts() {
+        Map<String, Integer> results = new Map<String, Integer>();
+
+        List<AggregateResult> grouped = [
             SELECT Status__c, COUNT(Id) cnt
             FROM Task_Management__c
             GROUP BY Status__c
         ];
-        
-        Map<String, Integer> statusMap = new Map<String, Integer>();
-        for (AggregateResult ar : statusCounts) {
-            statusMap.put((String)ar.get('Status__c'), (Integer)ar.get('cnt'));
+
+        for (AggregateResult row : grouped) {
+            results.put((String)row.get('Status__c'), (Integer)row.get('cnt'));
         }
-        statistics.put('statusCounts', statusMap);
-        
-        Integer overdueTasks = [
-            SELECT COUNT() 
-            FROM Task_Management__c 
-            WHERE Due_Date__c < TODAY 
-            AND Status__c != 'Completed'
-        ];
-        statistics.put('overdueTasks', overdueTasks);
-        
-        AggregateResult[] priorityCounts = [
+        return results;
+    }
+
+    private static Map<String, Integer> fetchPriorityCounts() {
+        Map<String, Integer> results = new Map<String, Integer>();
+
+        List<AggregateResult> grouped = [
             SELECT Priority__c, COUNT(Id) cnt
             FROM Task_Management__c
             GROUP BY Priority__c
         ];
-        
-        Map<String, Integer> priorityMap = new Map<String, Integer>();
-        for (AggregateResult ar : priorityCounts) {
-            priorityMap.put((String)ar.get('Priority__c'), (Integer)ar.get('cnt'));
+
+        for (AggregateResult row : grouped) {
+            results.put((String)row.get('Priority__c'), (Integer)row.get('cnt'));
         }
-        statistics.put('priorityCounts', priorityMap);
-        
-        return statistics;
+        return results;
     }
-    
+
+    private static Integer calculateOverdueTasks() {
+        return [
+            SELECT COUNT()
+            FROM Task_Management__c
+            WHERE Due_Date__c < TODAY
+            AND Status__c != 'Completed'
+        ];
+    }
+
     @AuraEnabled(cacheable=true)
     public static Integer getTaskTrendCount(Integer daysAgo) {
-        Date targetDate = Date.today().addDays(-daysAgo);
+        Date cutoff = Date.today().addDays(-daysAgo);
+
         return [
-            SELECT COUNT() 
-            FROM Task_Management__c 
-            WHERE CreatedDate >= :targetDate
+            SELECT COUNT()
+            FROM Task_Management__c
+            WHERE CreatedDate >= :cutoff
         ];
     }
 }

@@ -23,7 +23,7 @@ public class TaskManagementControllerTest {
     @isTest
     static void testGetTasks() {
         Test.startTest();
-        List<Task_Management__c> tasks = TaskManagementController.getTasks('Not Started', 'Medium', 10, 0);
+        List<Task_Management__c> tasks = TaskManagementController.getTasks('Not Started', 'Medium', 10, 0, '', '');
         Test.stopTest();
 
         Assert.areEqual(1, tasks.size(), 'Should return one task');

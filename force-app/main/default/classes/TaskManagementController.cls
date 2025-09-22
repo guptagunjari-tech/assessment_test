@@ -1,7 +1,7 @@
 public with sharing class TaskManagementController {
     @AuraEnabled(cacheable=true)
-    public static List<Task_Management__c> getTasks(String statusFilter, String priorityFilter, Integer limitSize, Integer offset) {
-        String query = 'SELECT Id, Name, Title__c, Description__c, Status__c, Priority__c, Due_Date__c, ' +
+    public static List<Task_Management__c> getTasks(String statusFilter, String priorityFilter, Integer limitSize, Integer offset, String sortColumn, String sortDirection) {
+        String query = 'SELECT Id, Name__c, Title__c, Description__c, Status__c, Priority__c, Due_Date__c, ' +
                       'AI_Summary__c, AI_Summary_Generated__c, AI_Summary_Last_Updated__c, Category__c, ' +
                       'Assigned_To__r.Name, CreatedDate, LastModifiedDate FROM Task_Management__c';
         
@@ -17,7 +17,11 @@ public with sharing class TaskManagementController {
             query += ' WHERE ' + String.join(conditions, ' AND ');
         }
         
-        query += ' ORDER BY CreatedDate DESC';
+        if(sortColumn != '' && sortDirection != '') {
+            query += ' ORDER BY ' + sortColumn + ' ' + sortDirection;
+        } else {
+            query += ' ORDER BY CreatedDate DESC';
+        }
         
         if (limitSize != null) {
             query += ' LIMIT :limitSize';

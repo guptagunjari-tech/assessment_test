@@ -47,7 +47,7 @@ export default class TaskForm extends LightningElement {
         const fields = event.detail.fields;
         const task = { ...fields };
 
-        createTask({ task, tags: this.tags })
+        createTask({ task, tags: [] })
             .then(result => {
                 generateAISummary({ taskId: result.Id });
                 this.showModal = false;
@@ -56,7 +56,8 @@ export default class TaskForm extends LightningElement {
                 this.showToast('Success', 'Task created successfully', 'success');
             })
             .catch(error => {
-                this.showToast('Error', error.body.message, 'error');
+                const errorMessage = error.body?.message || error.message || 'An unexpected error occurred while creating the task';
+                this.showToast('Error', errorMessage, 'error');
             })
             .finally(() => {
                 this.isSaving = false;
@@ -75,7 +76,6 @@ export default class TaskForm extends LightningElement {
 
     resetForm() {
         const form = this.template.querySelector('lightning-record-edit-form');
-        if (form) form.reset();
         this.tags = [];
         this.isSaving = false;
     }

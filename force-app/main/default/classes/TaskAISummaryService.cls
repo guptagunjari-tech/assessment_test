@@ -1,15 +1,24 @@
 public with sharing class TaskAISummaryService {
-    private static final String OPENROUTER_ENDPOINT = 'callout:OpenRouter/api/v1/messages';
-    private static final Integer MAX_RETRIES = 3;
+    private static final String OPENROUTER_ENDPOINT = 'callout:OpenRouter/v1/chat/completions';
+    private static final Integer MAX_RETRIES = 3;   
     private static final Integer RETRY_DELAY_MS = 1000;
-    
+
+    private static final String OPENROUTER_API_KEY = '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';
+
     @AuraEnabled
     public static void generateTaskSummary(Id taskId) {
-        Task_Management__c task = [SELECT Id, Title__c, Description__c, Priority__c, Due_Date__c, Category__c 
-                                 FROM Task_Management__c WHERE Id = :taskId LIMIT 1];
+        Task_Management__c task = [
+            SELECT Id, Title__c, Description__c, Priority__c, Due_Date__c, Category__c 
+            FROM Task_Management__c 
+            WHERE Id = :taskId 
+            LIMIT 1
+        ];
         
         String prompt = buildPrompt(task);
+        System.debug('Prompt: ' + prompt);
+        
         String summary = callOpenRouterAPI(prompt);
+        System.debug('Summary: ' + summary);
         
         if (String.isNotBlank(summary)) {
             task.AI_Summary__c = summary;
@@ -20,14 +29,14 @@ public with sharing class TaskAISummaryService {
     }
     
     private static String buildPrompt(Task_Management__c task) {
-        return 'Summarize the following task concisely:\n\n' +
+        return 'Summarize the following task concisely:\n' +
                'Title: ' + task.Title__c + '\n' +
                'Description: ' + (task.Description__c != null ? task.Description__c : 'N/A') + '\n' +
                'Priority: ' + task.Priority__c + '\n' +
                'Due Date: ' + (task.Due_Date__c != null ? task.Due_Date__c.format() : 'Not set') + '\n' +
                'Category: ' + task.Category__c;
     }
-    
+
     private static String callOpenRouterAPI(String prompt) {
         Integer retries = 0;
         while (retries < MAX_RETRIES) {
@@ -37,31 +46,40 @@ public with sharing class TaskAISummaryService {
                 req.setEndpoint(OPENROUTER_ENDPOINT);
                 req.setMethod('POST');
                 req.setHeader('Content-Type', 'application/json');
+                req.setHeader('Authorization', 'Bearer ' + OPENROUTER_API_KEY);
                 
                 Map<String, Object> body = new Map<String, Object>{
+                    'model' => 'mistralai/mixtral-8x7b-instruct',
                     'messages' => new List<Object>{
                         new Map<String, String>{
                             'role' => 'user',
                             'content' => prompt
                         }
-                    },
-                    'model' => 'mistralai/mixtral-8x7b-instruct'
+                    }
                 };
-                
+
                 req.setBody(JSON.serialize(body));
-                
                 HttpResponse res = http.send(req);
-                
+                System.debug('OpenRouter response: ' + res.getBody());
+
                 if (res.getStatusCode() == 200) {
                     Map<String, Object> response = (Map<String, Object>)JSON.deserializeUntyped(res.getBody());
                     List<Object> choices = (List<Object>)response.get('choices');
                     if (!choices.isEmpty()) {
                         Map<String, Object> choice = (Map<String, Object>)choices[0];
-                        Map<String, Object> message = (Map<String, Object>)choice.get('message');
-                        return (String)message.get('content');
+                        if (choice.containsKey('message')) {
+                            Map<String, Object> message = (Map<String, Object>)choice.get('message');
+                            return (String)message.get('content');
+                        } else if (choice.containsKey('text')) {
+                            return (String)choice.get('text');
+                        }
                     }
+                } else {
+                    System.debug('HTTP Status: ' + res.getStatusCode());
                 }
+
                 return null;
+
             } catch (Exception e) {
                 if (retries == MAX_RETRIES - 1) {
                     throw new AuraHandledException('Failed to generate AI summary: ' + e.getMessage());
@@ -69,8 +87,7 @@ public with sharing class TaskAISummaryService {
                 retries++;
                 if (Test.isRunningTest()) continue;
                 Integer delay = Integer.valueOf(RETRY_DELAY_MS * Math.pow(2, retries));
-                // Simple exponential backoff delay
-                System.debug('Retrying after ' + delay + ' ms');
+                System.debug('Retrying after ' + delay + ' ms due to error: ' + e.getMessage());
             }
         }
         return null;
