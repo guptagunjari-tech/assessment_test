@@ -30,12 +30,14 @@
             </div>
             <lightning-datatable
                 key-field="Id"
-                data={tasks}
+                data={tasksToDisplay}
                 columns={columns}
                 hide-checkbox-column
                 onsort={handleSort}
                 sorted-by={sortBy}
                 sorted-direction={sortDirection}
+                draft-values={draftValues}
+                onsave={handleSave}
                 onrowaction={handleRowAction}>
             </lightning-datatable>
 
