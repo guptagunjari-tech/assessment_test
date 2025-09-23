@@ -225,8 +225,70 @@ get tasksToDisplay() {
         }
     }
 
-    async handleSave(event) {
+//     async handleSave(event) {
+//     const updatedFields = event.detail.draftValues;
+
+//     try {
+//         const updatePromises = updatedFields.map(task =>
+//             updateTask({ task })
+//         );
+
+//         await Promise.all(updatePromises);
+
+//         this.dispatchEvent(
+//             new ShowToastEvent({
+//                 title: 'Success',
+//                 message: 'Tasks updated successfully',
+//                 variant: 'success'
+//             })
+//         );
+
+//         this.draftValues = [];
+
+//         // Refresh the datatable
+//         return this.refreshTasks();
+//     } catch (error) {
+//         this.dispatchEvent(
+//             new ShowToastEvent({
+//                 title: 'Error updating tasks',
+//                 message: error.body.message,
+//                 variant: 'error'
+//             })
+//         );
+//     }
+// }
+
+async handleSave(event) {
     const updatedFields = event.detail.draftValues;
+
+    // Validate Due Date for each updated task
+    for (let task of updatedFields) {
+        if (task.Due_Date__c) {
+            const dueDate = new Date(task.Due_Date__c);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // ignore time
+            if (dueDate < today) {
+                this.dispatchEvent(
+                    new ShowToastEvent({
+                        title: 'Error',
+                        message: `Due Date for task cannot be in the past.`,
+                        variant: 'error'
+                    })
+                );
+                return;
+            }
+        }
+        if (task.Title__c && /^\d/.test(task.Title__c.trim())) {
+            this.dispatchEvent(
+                        new ShowToastEvent({
+                            title: 'Error',
+                            message: `Task Title cannot start with a number.`,
+                            variant: 'error'
+                        })
+                    );
+            return;
+        }
+    }
 
     try {
         const updatePromises = updatedFields.map(task =>
@@ -257,6 +319,7 @@ get tasksToDisplay() {
         );
     }
 }
+
 
     @api
     refreshTasks() {

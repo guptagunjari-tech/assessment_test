@@ -42,9 +42,23 @@ export default class TaskForm extends LightningElement {
 
     handleSubmit(event) {
         event.preventDefault();
-        this.isSaving = true;
-
         const fields = event.detail.fields;
+
+        if (fields.Title__c && /^\d/.test(fields.Title__c.trim())) {
+            this.showToast('Error', 'Task Title cannot start with a number.', 'error');
+            return;
+        }
+        if (fields.Due_Date__c) {
+            const dueDate = new Date(fields.Due_Date__c);
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            if (dueDate < today) {
+                this.showToast('Error', 'Due Date cannot be in the past.', 'error');
+                return;
+            }
+        }
+
+        this.isSaving = true;
         const task = { ...fields };
 
         createTask({ task, tags: [] })
