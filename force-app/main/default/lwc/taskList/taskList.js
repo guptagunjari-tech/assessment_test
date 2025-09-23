@@ -3,6 +3,7 @@ import { refreshApex } from '@salesforce/apex';
 import getTasks from '@salesforce/apex/TaskManagementController.getTasks';
 import searchTasks from '@salesforce/apex/TaskManagementController.searchTasks';
 import deleteTask from '@salesforce/apex/TaskManagementController.deleteTask';
+import updateTask from '@salesforce/apex/TaskManagementController.updateTask';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
 const PAGE_SIZE = 10;
@@ -21,13 +22,14 @@ export default class TaskList extends LightningElement {
     @track taskToDelete;
     @track searchTerm = '';
     @track taskIdForSummary = '';
+    @track draftValues = [];
 
     columns = [
-        { label: 'Name', fieldName: 'Name__c', type: 'text', sortable: true },
-        { label: 'Title', fieldName: 'Title__c', type: 'text', sortable: true },
-        { label: 'Status', fieldName: 'Status__c', type: 'text', sortable: true },
-        { label: 'Priority', fieldName: 'Priority__c', type: 'text', sortable: true },
-        { label: 'Due Date', fieldName: 'Due_Date__c', type: 'date', sortable: true },
+        { label: 'Name', fieldName: 'Name__c', type: 'text', sortable: true, editable: true },
+        { label: 'Title', fieldName: 'Title__c', type: 'text', sortable: true, editable: true },
+        { label: 'Status', fieldName: 'Status__c', type: 'text', sortable: true, editable: true  },
+        { label: 'Priority', fieldName: 'Priority__c', type: 'text', sortable: true, editable: true  },
+        { label: 'Due Date', fieldName: 'Due_Date__c', type: 'date', sortable: true, editable: true },
         { label: 'Assigned To', fieldName: 'AssignedToName', type: 'text' },
         {
             type: 'action',
@@ -93,27 +95,44 @@ export default class TaskList extends LightningElement {
         return this.tasks.length < PAGE_SIZE;
     }
 
-    handleSearch(event) {
-        clearTimeout(this.searchTimeout);
-        const searchTerm = event.target.value;
-        
-        this.searchTimeout = setTimeout(() => {
-            if (searchTerm) {
-                searchTasks({ searchTerm })
-                    .then(result => {
-                        this.tasks = result.map(task => ({
-                            ...task,
-                            AssignedToName: task.Assigned_To__r ? task.Assigned_To__r.Name : ''
-                        }));
-                    })
-                    .catch(error => {
-                        this.error = error;
-                    });
-            } else {
-                this.refreshTasks();
-            }
-        }, DEBOUNCE_DELAY);
-    }
+  @track searchResults = []; // store SOSL search results
+
+handleSearch(event) { 
+    clearTimeout(this.searchTimeout);
+    const searchTerm = event.target.value;
+
+    this.searchTimeout = setTimeout(() => {
+        this.searchTerm = searchTerm; // store current search
+
+        if (searchTerm) {
+            searchTasks({ searchTerm: searchTerm })
+                .then(result => {
+                    this.searchResults = result.map(task => ({
+                        ...task,
+                        AssignedToName: task.Assigned_To__r ? task.Assigned_To__r.Name : ''
+                    }));
+                    this.error = undefined;
+                })
+                .catch(error => {
+                    this.error = error;
+                    this.searchResults = [];
+                });
+        } else {
+            this.searchResults = [];
+            this.pageNumber = 1;
+            this.sortBy = 'CreatedDate';
+            this.sortDirection = 'desc';
+            refreshApex(this.wiredTaskResult);
+        }
+    }, DEBOUNCE_DELAY);
+}
+
+get tasksToDisplay() {
+    return this.searchTerm ? this.searchResults : (this.wiredTaskResult.data ? this.wiredTaskResult.data.map(task => ({
+        ...task,
+        AssignedToName: task.Assigned_To__r ? task.Assigned_To__r.Name : ''
+    })) : []);
+}
 
     handleStatusChange(event) {
         this.statusFilter = event.detail.value;
@@ -205,6 +224,39 @@ export default class TaskList extends LightningElement {
             this.pageNumber++;
         }
     }
+
+    async handleSave(event) {
+    const updatedFields = event.detail.draftValues;
+
+    try {
+        const updatePromises = updatedFields.map(task =>
+            updateTask({ task })
+        );
+
+        await Promise.all(updatePromises);
+
+        this.dispatchEvent(
+            new ShowToastEvent({
+                title: 'Success',
+                message: 'Tasks updated successfully',
+                variant: 'success'
+            })
+        );
+
+        this.draftValues = [];
+
+        // Refresh the datatable
+        return this.refreshTasks();
+    } catch (error) {
+        this.dispatchEvent(
+            new ShowToastEvent({
+                title: 'Error updating tasks',
+                message: error.body.message,
+                variant: 'error'
+            })
+        );
+    }
+}
 
     @api
     refreshTasks() {
