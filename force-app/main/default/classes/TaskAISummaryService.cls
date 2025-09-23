@@ -1,9 +1,7 @@
 public with sharing class TaskAISummaryService {
-    private static final String OPENROUTER_ENDPOINT = 'callout:OpenRouter/v1/chat/completions';
+    private static final String OPENROUTER_ENDPOINT = 'callout:ORCred/chat/completions';
     private static final Integer MAX_RETRIES = 3;   
     private static final Integer RETRY_DELAY_MS = 1000;
-
-    private static final String OPENROUTER_API_KEY = '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';
 
     @AuraEnabled
     public static void generateTaskSummary(Id taskId) {
@@ -46,7 +44,6 @@ public with sharing class TaskAISummaryService {
                 req.setEndpoint(OPENROUTER_ENDPOINT);
                 req.setMethod('POST');
                 req.setHeader('Content-Type', 'application/json');
-                req.setHeader('Authorization', 'Bearer ' + OPENROUTER_API_KEY);
                 
                 Map<String, Object> body = new Map<String, Object>{
                     'model' => 'mistralai/mixtral-8x7b-instruct',
