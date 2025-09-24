@@ -14,12 +14,10 @@ public class TaskAISummaryServiceTest {
         insert task;
     }
 
-    // ---------- Test success scenario ----------
     @isTest
     static void testGenerateTaskSummary_Success() {
         Task_Management__c task = [SELECT Id FROM Task_Management__c LIMIT 1];
 
-        // Mock a successful callout
         Test.setMock(HttpCalloutMock.class, new OpenRouterMock());
 
         Test.startTest();
@@ -37,12 +35,10 @@ public class TaskAISummaryServiceTest {
         System.assertNotEquals(null, updatedTask.AI_Summary_Last_Updated__c, 'Last updated timestamp should be set');
     }
 
-    // ---------- Test failure scenario ----------
     @isTest
     static void testGenerateTaskSummary_Failure() {
         Task_Management__c task = [SELECT Id FROM Task_Management__c LIMIT 1];
 
-        // Mock a failing callout (HTTP 500)
         Test.setMock(HttpCalloutMock.class, new OpenRouterErrorMock());
 
         Test.startTest();
@@ -60,7 +56,6 @@ public class TaskAISummaryServiceTest {
         System.assertEquals(null, updatedTask.AI_Summary_Last_Updated__c, 'Last updated timestamp should not be set');
     }
 
-    // ---------- Mock classes ----------
     public class OpenRouterMock implements HttpCalloutMock {
         public HTTPResponse respond(HTTPRequest req) {
             System.assertEquals('POST', req.getMethod(), 'HTTP method should be POST');

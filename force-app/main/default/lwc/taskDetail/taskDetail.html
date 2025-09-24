@@ -7,14 +7,12 @@
     <template if:false={isLoading}>
         <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open">
             <div class="slds-modal__container">
-                <!-- Header -->
                 <header class="slds-modal__header">
                     <h2 class="slds-modal__title slds-hyphenate">Edit Task</h2>
                     <button class="slds-button slds-button_icon slds-modal__close" onclick={handleClose}>
                         <lightning-icon icon-name="utility:close" size="small"></lightning-icon>
                     </button>
                 </header>
-                    <!-- Content Section -->
                     <div class="slds-modal__content slds-p-around_medium">
                         <lightning-record-edit-form 
                             record-id={taskId} 
@@ -33,7 +31,6 @@
                             </div>
                         </lightning-record-edit-form>
                     </div>
-                <!-- Footer -->
                 <footer class="slds-modal__footer">
                     <lightning-button-group>
                         <lightning-button 

@@ -63,32 +63,33 @@ public with sharing class TaskManagementController {
         delete new Task_Management__c(Id = taskId);
     }
 
-    @AuraEnabled(cacheable=true)
-public static List<Task_Management__c> searchTasks(String searchTerm) {
+
+@AuraEnabled(cacheable=true)
+public static List<Task_Management__c> searchTasks(String searchTerm, String statusFilter, String priorityFilter) {
     if (String.isBlank(searchTerm)) return new List<Task_Management__c>();
 
-    // Escape search term
     String escapedSearch = String.escapeSingleQuotes(searchTerm);
 
-    // SOSL search (will search all fields)
     String searchQuery = 'FIND \'' + escapedSearch + '*\' IN ALL FIELDS RETURNING Task_Management__c(' +
                          'Id, Name__c, Title__c, Description__c, Status__c, Priority__c, Due_Date__c, ' +
                          'AI_Summary__c, AI_Summary_Generated__c, Category__c, Assigned_To__r.Name ' +
                          'ORDER BY CreatedDate DESC)';
-    
+
     List<List<SObject>> searchResults = Search.query(searchQuery);
     List<Task_Management__c> tasks = (List<Task_Management__c>)searchResults[0];
 
-    // Filter results in Apex: only Title or Description matches the search term
     String searchLower = searchTerm.toLowerCase();
     List<Task_Management__c> filteredTasks = new List<Task_Management__c>();
     for (Task_Management__c t : tasks) {
         if ((t.Title__c != null && t.Title__c.toLowerCase().contains(searchLower)) ||
             (t.Description__c != null && t.Description__c.toLowerCase().contains(searchLower))) {
-            filteredTasks.add(t);
+
+            if ((String.isBlank(statusFilter) || t.Status__c == statusFilter) &&
+                (String.isBlank(priorityFilter) || t.Priority__c == priorityFilter)) {
+                filteredTasks.add(t);
+            }
         }
     }
-
     return filteredTasks;
 }
 

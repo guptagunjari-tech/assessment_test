@@ -29,6 +29,7 @@ export default class TaskList extends LightningElement {
         { label: 'Title', fieldName: 'Title__c', type: 'text', sortable: true, editable: true },
         { label: 'Status', fieldName: 'Status__c', type: 'text', sortable: true, editable: true  },
         { label: 'Priority', fieldName: 'Priority__c', type: 'text', sortable: true, editable: true  },
+        { label: 'Category', fieldName: 'Category__c', type: 'text', sortable: true, editable: true  },
         { label: 'Due Date', fieldName: 'Due_Date__c', type: 'date', sortable: true, editable: true },
         { label: 'Assigned To', fieldName: 'AssignedToName', type: 'text' },
         {
@@ -95,17 +96,21 @@ export default class TaskList extends LightningElement {
         return this.tasks.length < PAGE_SIZE;
     }
 
-  @track searchResults = []; // store SOSL search results
+  @track searchResults = [];
 
 handleSearch(event) { 
     clearTimeout(this.searchTimeout);
     const searchTerm = event.target.value;
 
     this.searchTimeout = setTimeout(() => {
-        this.searchTerm = searchTerm; // store current search
+        this.searchTerm = searchTerm;
 
         if (searchTerm) {
-            searchTasks({ searchTerm: searchTerm })
+           searchTasks({ 
+    searchTerm: searchTerm,
+    statusFilter: this.statusFilter,
+    priorityFilter: this.priorityFilter
+})
                 .then(result => {
                     this.searchResults = result.map(task => ({
                         ...task,
@@ -128,11 +133,21 @@ handleSearch(event) {
 }
 
 get tasksToDisplay() {
-    return this.searchTerm ? this.searchResults : (this.wiredTaskResult.data ? this.wiredTaskResult.data.map(task => ({
+    let data = this.searchTerm ? this.searchResults : (this.wiredTaskResult.data || []);
+    
+    if (this.statusFilter) {
+        data = data.filter(task => task.Status__c === this.statusFilter);
+    }
+    if (this.priorityFilter) {
+        data = data.filter(task => task.Priority__c === this.priorityFilter);
+    }
+
+    return data.map(task => ({
         ...task,
         AssignedToName: task.Assigned_To__r ? task.Assigned_To__r.Name : ''
-    })) : []);
+    }));
 }
+
 
     handleStatusChange(event) {
         this.statusFilter = event.detail.value;
@@ -228,12 +243,11 @@ get tasksToDisplay() {
 async handleSave(event) {
     const updatedFields = event.detail.draftValues;
 
-    // Validate Due Date for each updated task
     for (let task of updatedFields) {
         if (task.Due_Date__c) {
             const dueDate = new Date(task.Due_Date__c);
             const today = new Date();
-            today.setHours(0, 0, 0, 0); // ignore time
+            today.setHours(0, 0, 0, 0);
             if (dueDate < today) {
                 this.dispatchEvent(
                     new ShowToastEvent({
@@ -274,7 +288,6 @@ async handleSave(event) {
 
         this.draftValues = [];
 
-        // Refresh the datatable
         return this.refreshTasks();
     } catch (error) {
         this.dispatchEvent(

@@ -8,6 +8,7 @@ export default class TaskForm extends LightningElement {
     @track showModal = false;
     @track tags = [];
     @track isSaving = false;
+    @track newTag = ''; 
 
     get modalTitle() {
         return this.recordId ? 'Edit Task' : 'New Task';
@@ -27,19 +28,7 @@ export default class TaskForm extends LightningElement {
         this.showModal = false;
         this.resetForm();
     }
-
-    handleTagsChange(event) {
-        const value = event.target.value;
-        this.tags = value.split(',')
-            .map(tag => tag.trim())
-            .filter(tag => tag);
-    }
-
-    handleRemoveTag(event) {
-        const tagToRemove = event.target.label;
-        this.tags = this.tags.filter(tag => tag !== tagToRemove);
-    }
-
+    
     handleSubmit(event) {
         event.preventDefault();
         const fields = event.detail.fields;
@@ -61,7 +50,7 @@ export default class TaskForm extends LightningElement {
         this.isSaving = true;
         const task = { ...fields };
 
-        createTask({ task, tags: [] })
+        createTask({ task, tags: this.tags })
             .then(result => {
                 generateAISummary({ taskId: result.Id });
                 this.showModal = false;
@@ -101,6 +90,28 @@ export default class TaskForm extends LightningElement {
                 message: message,
                 variant: variant
             })
-        );
+        );      
     }
+
+handleNewTagChange(event) {
+    this.newTag = event.target.value;
+}
+
+handleTagKeyDown(event) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        const newTagTrimmed = this.newTag.trim();
+        if (newTagTrimmed && !this.tags.includes(newTagTrimmed)) {
+            this.tags = [...this.tags, newTagTrimmed];
+        }
+        this.newTag = '';
+    }
+}
+
+    handleRemoveTag(event) {
+        const tagToRemove = event.target.label;
+        this.tags = this.tags.filter(tag => tag !== tagToRemove);
+    }
+
+
 }

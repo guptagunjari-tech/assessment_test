@@ -11,9 +11,6 @@ public with sharing class TaskStatisticsController {
         return stats;
     }
 
-    /**
-     * Returns counts of tasks grouped by status
-     */
     private static Map<String, Integer> fetchStatusCounts() {
         Map<String, Integer> results = new Map<String, Integer>();
 

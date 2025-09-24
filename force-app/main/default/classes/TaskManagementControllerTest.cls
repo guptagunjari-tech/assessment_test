@@ -24,7 +24,6 @@ public class TaskManagementControllerTest {
     static void testGetTasks() {
         Task_Management__c task = [SELECT Id FROM Task_Management__c LIMIT 1];
         
-        // Set up the fixed search results
         List<Id> fixedSearchResults = new List<Id>{task.Id};
         Test.setFixedSearchResults(fixedSearchResults);
         Test.startTest();
@@ -69,14 +68,12 @@ public class TaskManagementControllerTest {
     
     @isTest
 static void testSearchTasks() {
-    // Get the task created in @TestSetup
     Task_Management__c task = [SELECT Id FROM Task_Management__c WHERE Title__c = 'Test Task' LIMIT 1];
 
-    // Mock SOSL results so that the search query will return this task
     Test.setFixedSearchResults(new List<Id>{ task.Id });
 
     Test.startTest();
-    List<Task_Management__c> results = TaskManagementController.searchTasks('Test');
+    List<Task_Management__c> results = TaskManagementController.searchTasks('Test', 'Not Started', 'Medium');
     Test.stopTest();
 
     System.assertEquals(1, results.size(), 'Should find one matching task');

@@ -43,25 +43,28 @@
                                 </div>
                             </div>
 
-                            <!-- <div class="slds-m-top_medium">
-                                <lightning-input
-                                    type="text"
-                                    label="Tags (comma-separated)"
-                                    value={tagsString}
-                                    onchange={handleTagsChange}>
-                                </lightning-input>
+                            <div class="slds-grid slds-gutters slds-m-top_medium">
+                                <div class="slds-col slds-size_1-of-1">
+                                    <lightning-input
+                                        type="text"
+                                        label="Add Tag"
+                                        value={newTag}
+                                        onchange={handleNewTagChange}
+                                        onkeydown={handleTagKeyDown}>
+                                    </lightning-input>
+
+                                    <div class="slds-m-top_small">
+                                        <template for:each={tags} for:item="tag">
+                                            <lightning-pill 
+                                                key={tag}
+                                                label={tag}
+                                                onremove={handleRemoveTag}>
+                                            </lightning-pill>
+                                        </template>
+                                    </div>
+                                </div>
                             </div>
-
-                            <div class="slds-m-top_medium">
-                                <template for:each={tags} for:item="tag">
-                                    <lightning-pill 
-                                        key={tag}
-                                        label={tag}
-                                        onremove={handleRemoveTag}>
-                                    </lightning-pill>
-                                </template>
-                            </div> -->
-
+                            
                             <div class="slds-m-top_medium slds-text-align_right">
                                 <lightning-button
                                     class="slds-m-right_x-small"

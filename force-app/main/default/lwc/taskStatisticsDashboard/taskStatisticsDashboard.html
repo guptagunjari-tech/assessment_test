@@ -3,7 +3,6 @@
         <div class="slds-p-around_medium">
             <h2 class="slds-text-heading_small slds-m-bottom_medium">Task Statistics</h2>
 
-            <!-- Loading Spinner -->
             <template if:true={isLoading}>
                 <div class="slds-is-relative slds-m-around_medium">
                     <lightning-spinner alternative-text="Loading statistics" size="small"></lightning-spinner>
@@ -13,7 +12,6 @@
             <template if:false={isLoading}>
                 <div class="slds-grid slds-wrap slds-gutters">
 
-                    <!-- Overdue Tasks -->
                     <div class="slds-col slds-size_1-of-1">
                         <div class="slds-box slds-box_x-small slds-text-align_center slds-m-bottom_medium">
                             <div class="slds-text-heading_large slds-text-color_error">
@@ -23,7 +21,6 @@
                         </div>
                     </div>
 
-                    <!-- Tasks by Status -->
                     <div class="slds-col slds-size_1-of-1">
                         <div class="slds-box slds-box_x-small slds-text-align_center slds-m-bottom_medium">
                             <h3 class="slds-text-body_small slds-m-bottom_xx-small">Tasks by Status</h3>
@@ -33,7 +30,6 @@
                         </div>
                     </div>
 
-                    <!-- Tasks by Priority -->
                     <div class="slds-col slds-size_1-of-1">
                         <div class="slds-box slds-box_x-small slds-text-align_center slds-m-bottom_medium">
                             <h3 class="slds-text-body_small slds-m-bottom_xx-small">Tasks by Priority</h3>
