@@ -1,5 +1,6 @@
 @isTest
 public class TaskAISummaryServiceTest {
+
     @TestSetup
     static void makeData() {
         Task_Management__c task = new Task_Management__c(
@@ -13,10 +14,12 @@ public class TaskAISummaryServiceTest {
         insert task;
     }
 
+    // ---------- Test success scenario ----------
     @isTest
-    static void testGenerateTaskSummary() {
+    static void testGenerateTaskSummary_Success() {
         Task_Management__c task = [SELECT Id FROM Task_Management__c LIMIT 1];
 
+        // Mock a successful callout
         Test.setMock(HttpCalloutMock.class, new OpenRouterMock());
 
         Test.startTest();
@@ -29,31 +32,43 @@ public class TaskAISummaryServiceTest {
             WHERE Id = :task.Id
         ];
 
-        Assert.isTrue(updatedTask.AI_Summary_Generated__c, 'AI Summary should be marked as generated');
-        Assert.isNotNull(updatedTask.AI_Summary__c, 'AI Summary should not be null');
-        Assert.isNotNull(updatedTask.AI_Summary_Last_Updated__c, 'Last updated timestamp should be set');
+        System.assertEquals(true, updatedTask.AI_Summary_Generated__c, 'AI Summary should be marked as generated');
+        System.assertNotEquals(null, updatedTask.AI_Summary__c, 'AI Summary should not be null');
+        System.assertNotEquals(null, updatedTask.AI_Summary_Last_Updated__c, 'Last updated timestamp should be set');
     }
 
+    // ---------- Test failure scenario ----------
     @isTest
-    static void testGenerateTaskSummaryError() {
+    static void testGenerateTaskSummary_Failure() {
         Task_Management__c task = [SELECT Id FROM Task_Management__c LIMIT 1];
 
+        // Mock a failing callout (HTTP 500)
         Test.setMock(HttpCalloutMock.class, new OpenRouterErrorMock());
 
         Test.startTest();
-        try {
-            TaskAISummaryService.generateTaskSummary(task.Id);
-            Assert.fail('Should throw an exception');
-        } catch (AuraHandledException e) {
-            Assert.isTrue(e.getMessage().contains('Failed to generate AI summary'), 'Should throw correct error message');
-        }
+        TaskAISummaryService.generateTaskSummary(task.Id);
         Test.stopTest();
+
+        Task_Management__c updatedTask = [
+            SELECT AI_Summary__c, AI_Summary_Generated__c, AI_Summary_Last_Updated__c 
+            FROM Task_Management__c 
+            WHERE Id = :task.Id
+        ];
+
+        System.assertEquals(null, updatedTask.AI_Summary__c, 'AI Summary should be null on callout error');
+        System.assertEquals(false, updatedTask.AI_Summary_Generated__c, 'AI Summary should not be marked as generated');
+        System.assertEquals(null, updatedTask.AI_Summary_Last_Updated__c, 'Last updated timestamp should not be set');
     }
 
+    // ---------- Mock classes ----------
     public class OpenRouterMock implements HttpCalloutMock {
         public HTTPResponse respond(HTTPRequest req) {
-            Assert.areEqual('POST', req.getMethod(), 'HTTP method should be POST');
-            Assert.areEqual('callout:OpenRouter/api/v1/messages', req.getEndpoint(), 'Endpoint should match');
+            System.assertEquals('POST', req.getMethod(), 'HTTP method should be POST');
+            System.assertEquals(
+                'callout:ORCred/chat/completions', 
+                req.getEndpoint(), 
+                'Endpoint should match'
+            );
 
             HttpResponse res = new HttpResponse();
             res.setHeader('Content-Type', 'application/json');
@@ -65,6 +80,13 @@ public class TaskAISummaryServiceTest {
 
     public class OpenRouterErrorMock implements HttpCalloutMock {
         public HTTPResponse respond(HTTPRequest req) {
+            System.assertEquals('POST', req.getMethod(), 'HTTP method should be POST');
+            System.assertEquals(
+                'callout:ORCred/chat/completions', 
+                req.getEndpoint(), 
+                'Endpoint should match'
+            );
+
             HttpResponse res = new HttpResponse();
             res.setStatusCode(500);
             res.setBody('{"error": "Test error"}');

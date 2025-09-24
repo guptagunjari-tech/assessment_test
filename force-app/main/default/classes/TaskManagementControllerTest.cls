@@ -22,6 +22,11 @@ public class TaskManagementControllerTest {
 
     @isTest
     static void testGetTasks() {
+        Task_Management__c task = [SELECT Id FROM Task_Management__c LIMIT 1];
+        
+        // Set up the fixed search results
+        List<Id> fixedSearchResults = new List<Id>{task.Id};
+        Test.setFixedSearchResults(fixedSearchResults);
         Test.startTest();
         List<Task_Management__c> tasks = TaskManagementController.getTasks('Not Started', 'Medium', 10, 0, '', '');
         Test.stopTest();
@@ -61,6 +66,23 @@ public class TaskManagementControllerTest {
         Task_Management__c updatedTask = [SELECT Status__c FROM Task_Management__c WHERE Id = :task.Id];
         Assert.areEqual('In Progress', updatedTask.Status__c, 'Status should be updated');
     }
+    
+    @isTest
+static void testSearchTasks() {
+    // Get the task created in @TestSetup
+    Task_Management__c task = [SELECT Id FROM Task_Management__c WHERE Title__c = 'Test Task' LIMIT 1];
+
+    // Mock SOSL results so that the search query will return this task
+    Test.setFixedSearchResults(new List<Id>{ task.Id });
+
+    Test.startTest();
+    List<Task_Management__c> results = TaskManagementController.searchTasks('Test');
+    Test.stopTest();
+
+    System.assertEquals(1, results.size(), 'Should find one matching task');
+    System.assertEquals('Test Task', results[0].Title__c, 'Should find task with matching title');
+}
+
 
     @isTest
     static void testDeleteTask() {
@@ -72,15 +94,5 @@ public class TaskManagementControllerTest {
 
         List<Task_Management__c> remainingTasks = [SELECT Id FROM Task_Management__c];
         Assert.areEqual(0, remainingTasks.size(), 'Task should be deleted');
-    }
-
-    @isTest
-    static void testSearchTasks() {
-        Test.startTest();
-        List<Task_Management__c> results = TaskManagementController.searchTasks('Test');
-        Test.stopTest();
-
-        Assert.areEqual(1, results.size(), 'Should find one matching task');
-        Assert.areEqual('Test Task', results[0].Title__c, 'Should find task with matching title');
     }
 }
