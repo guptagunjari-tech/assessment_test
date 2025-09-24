@@ -225,39 +225,6 @@ get tasksToDisplay() {
         }
     }
 
-//     async handleSave(event) {
-//     const updatedFields = event.detail.draftValues;
-
-//     try {
-//         const updatePromises = updatedFields.map(task =>
-//             updateTask({ task })
-//         );
-
-//         await Promise.all(updatePromises);
-
-//         this.dispatchEvent(
-//             new ShowToastEvent({
-//                 title: 'Success',
-//                 message: 'Tasks updated successfully',
-//                 variant: 'success'
-//             })
-//         );
-
-//         this.draftValues = [];
-
-//         // Refresh the datatable
-//         return this.refreshTasks();
-//     } catch (error) {
-//         this.dispatchEvent(
-//             new ShowToastEvent({
-//                 title: 'Error updating tasks',
-//                 message: error.body.message,
-//                 variant: 'error'
-//             })
-//         );
-//     }
-// }
-
 async handleSave(event) {
     const updatedFields = event.detail.draftValues;
 
